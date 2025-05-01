@@ -11,10 +11,23 @@ class Register extends BaseRegister
     protected function getFormSchema(): array
     {
         return [
-            TextInput::make('name')->required()->maxLength(255),
-            TextInput::make('email')->email()->required()->maxLength(255)->unique(),
-            TextInput::make('password')->password()->required()->minLength(8)->confirmed(),
-            TextInput::make('password_confirmation')->password()->required()->label('Confirm Password'),
+            TextInput::make('name')
+                ->required()
+                ->maxLength(255),
+            TextInput::make('email')
+                ->email()
+                ->required()
+                ->maxLength(255)
+                ->unique(),
+            TextInput::make('password')
+                ->password()
+                ->required()
+                ->minLength(8)
+                ->confirmed(),
+            TextInput::make('password_confirmation')
+                ->password()
+                ->required()
+                ->label('Confirm Password'),
             Select::make('role')
                 ->label('Role')
                 ->options([
@@ -36,6 +49,6 @@ class Register extends BaseRegister
 
     protected function getRedirectUrl(): string
     {
-        return '/login'; // Adjust if panel-specific login is needed
+        return '/staff/login';
     }
 }

@@ -11,25 +11,26 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Actions\Action;
 use Illuminate\Support\Facades\Auth;
 
-class TechnicalPage extends Page implements HasTable
+class AcademicPage extends Page implements HasTable
 {
     use InteractsWithTable;
-    protected static string $view = 'filament.pages.technical-page';
-    protected static ?string $slug = 'technical'; // Matches /staff/technical
-    protected static ?string $navigationLabel = 'Technical Dashboard';
-    protected static ?string $navigationIcon = 'heroicon-o-wrench';
+    protected static string $view = 'filament.pages.academic-page';
+    protected static ?string $slug = 'academic'; // Matches /staff/academic
+    protected static ?string $navigationLabel = 'Academic Dashboard';
+    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
-                Risk::where('type', 'technical')
+                Risk::where('type', 'academic')
                     ->whereHas('reporter', fn ($query) => $query->where('role', 'staff'))
                     ->with('reporter')
             )
             ->columns([
                 TextColumn::make('description')->label('Description'),
                 TextColumn::make('reporter.name')->label('Reported By'),
+                TextColumn::make('reporter.phone')->label('Reporter Phone'), // Staff phone number
                 TextColumn::make('type')->label('Type')->formatStateUsing(fn ($state) => ucfirst($state)),
                 TextColumn::make('status')->label('Status')->badge()
                     ->color(fn ($state) => match ($state) {
@@ -54,11 +55,11 @@ class TechnicalPage extends Page implements HasTable
                     ->label('Resolve')
                     ->button()
                     ->color('success')
-                    ->visible(fn (Risk $record) => $record->status !== 'resolved') // Hide if already resolved
+                    ->visible(fn (Risk $record) => $record->status !== 'resolved')
                     ->action(function (Risk $record) {
                         $record->update([
                             'status' => 'resolved',
-                            'response' => 'Issue resolved by ' . Auth::user()->name, // Optional
+                            'response' => 'Issue resolved by ' . Auth::user()->name . ' (Phone: ' . Auth::user()->phone . ')', // Academic phone
                         ]);
                     })
                     ->requiresConfirmation()
@@ -67,18 +68,19 @@ class TechnicalPage extends Page implements HasTable
                     ->modalSubmitActionLabel('Yes, resolve it'),
             ]);
     }
+
     public static function canAccess(): bool
     {
-        return Auth::check() && Auth::user()->role === 'technical';
+        return Auth::check() && Auth::user()->role === 'academic';
     }
 
     public function getTitle(): string
     {
-        return 'Technical Risk Overview';
+        return 'Academic Risk Overview';
     }
 
     public function getHeading(): string
     {
-        return 'Technical Risks Reported by Staff';
+        return 'Academic Risks Reported by Staff';
     }
 }

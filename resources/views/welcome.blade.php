@@ -1,197 +1,223 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
-        <meta http-equiv="x-ua-compatible" content="ie=edge">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>UAUT | Staff Risk Management</title>
+    <meta name="description" content="UAUT Staff Risk Management System - Quick, Secure, and Confidential Risk Reporting">
+    <meta name="author" content="UAUT">
+    <meta name="robots" content="noindex, nofollow">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="shortcut icon" href="{{ url('/img/uaut-logo.jpg') }}" type="image/x-icon">
+    <link rel="apple-touch-icon" href="{{ url('/img/uaut-logo.jpg') }}">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'uaut-green': '#28a745',
+                        'uaut-dark': '#1a1c23',
+                        'uaut-gray': '#f5f7fa',
+                        'uaut-white': '#ffffff',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Hero Background */
+        .hero {
+            background: linear-gradient(135deg, rgba(26, 28, 35, 0.9), rgba(26, 28, 35, 0.9)), url('/img/baraka_hall.png');
+            background-size: cover;
+            background-position: center;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
 
-        <title>UAUT | Home</title>
+        /* Navbar */
+        .navbar {
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .navbar.scrolled {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .nav-link {
+            position: relative;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 50%;
+            background: #28a745;
+            transition: width 0.3s ease, left 0.3s ease;
+        }
+        .nav-link:hover::after, .nav-link.active::after {
+            width: 70%;
+            left: 15%;
+        }
 
-        <meta name="description" content="Freebie 19 - Landing Startup. Check out more at https://pixelcave.com">
-        <meta name="author" content="pixelcave">
-        <meta name="robots" content="noindex, nofollow">
-
-        <!-- Icons -->
-        <link rel="shortcut icon" href="assets/media/favicons/favicon.png">
-        <link rel="apple-touch-icon" href="assets/media/favicons/apple-touch-icon-180x180.png">
-        <link rel="shortcut icon" href="../../public/img/uaut-logo.jpg" type="image/x-icon">
-
-        <!-- Stylesheets -->
-        <link href="https://fonts.googleapis.com/css?family=Muli:300,400,400i,600,700" rel="stylesheet">
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
-        <link rel="stylesheet" href="../../public/css/main.min.css">
-        <link rel="stylesheet" href="../../public/css/main.css">
-    </head>
-    <body>
-        <div id="page-container">
-            <!-- Hero -->
-            <div class="hero">
-                <div class="bg-hero"></div>
-                <div class="container position-relative">
-                    <!-- Header -->
-                    <header class="py-5">
-                        <div class="row">
-                            <div class="col-md-4 text-center text-md-left mb-3 mb-md-0">
-                                <a class="text-light h4" href="">
-                                    <img src="../../public/img/uaut-logo.jpg" alt="">
-                                </a>
-                            </div>
-                            <div class="col-md-8">
-                                <nav class="nav nav-header justify-content-center justify-content-md-end">
-                                    <a class="nav-link active" href="javascript:void(0)">Home</a>
-                                    <a class="nav-link" href="javascript:void(0)">About Us</a>
-                                    <a class="nav-link" href="javascript:void(0)">Contact</a>
-                                    <a class="nav-link" href="javascript:void(0)">Address</a>
-                                </nav>
-                            </div>
+        /* Buttons */
+        .btn-custom {
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-uaut-gray font-sans antialiased">
+    <div id="page-container">
+        <!-- Hero Section -->
+        <section class="hero text-uaut-white">
+            <div class="w-full">
+                <!-- Navbar -->
+                <nav class="navbar fixed top-0 left-0 w-full z-50 bg-uaut-white bg-opacity-10 p-4 lg:px-8">
+                    <div class="container mx-auto flex items-center justify-between">
+                        <a href="/" class="flex items-center">
+                            <img src="{{ url('/img/uaut-logo.jpg') }}" alt="UAUT Logo" class="h-12 w-12 rounded-full transition-transform hover:scale-105">
+                            <span class="ml-3 text-xl font-bold text-uaut-white lg:text-uaut-dark">UAUT</span>
+                        </a>
+                        <div class="hidden lg:flex space-x-8">
+                            <a href="/" class="nav-link text-uaut-white lg:text-uaut-dark font-semibold hover:text-uaut-green active">Home</a>
+                            <a href="#about" class="nav-link text-uaut-white lg:text-uaut-dark font-semibold hover:text-uaut-green">About Us</a>
+                            <a href="#contact" class="nav-link text-uaut-white lg:text-uaut-dark font-semibold hover:text-uaut-green">Contact</a>
+                            <a href="#address" class="nav-link text-uaut-white lg:text-uaut-dark font-semibold hover:text-uaut-green">Address</a>
                         </div>
-                    </header>
-                    <!-- END Header -->
-
-                    <!-- Content -->
-                    <div class="row justify-content-center">
-                        <div class="col-lg-8">
-                            <div class="py-5 text-center">
-                                <h1 class="font-weight-bold text-white mb-4">
-                                    Let’s build the future together
-                                </h1>
-                                <p class="lead font-weight-normal text-white-75 mx-lg-5 mb-5">
-                                    Inspiring tools and resources to help you build your next endeavour easily and effortlessly.
-                                </p>
-                                <a href="javascript:void(0)" class="btn btn-success shadow-lg text-uppercase font-weight-bold py-3 px-4">
-                                    <i class="fa fa-check-circle mr-1"></i> REGISTER NOW
-                                </a>
-                            </div>
-                        </div>
+                        <button class="lg:hidden text-uaut-white focus:outline-none" onclick="toggleMenu()">
+                            <i class="fas fa-bars text-2xl"></i>
+                        </button>
                     </div>
-                    <!-- END Content -->
-                </div>
-            </div>
-            <!-- END Hero -->
-
-            <!-- Feature #1 -->
-            <div class="bg-white py-5">
-                <div class="container">
-                    <div class="row justify-content-center">
-                        <div class="col-lg-5 d-flex align-items-center justify-content-center justify-content-lg-end py-5">
-                            <div class="pr-lg-4">
-                                <img class="img-fluid" style="max-width: 300px;" src="../../public/img/undraw_businessman.svg" alt="Businessman Illustration">
-                            </div>
-                        </div>
-                        <div class="col-lg-5 d-flex align-items-center justify-content-center justify-content-lg-start py-5">
-                            <div class="pl-lg-4">
-                                <h2 class="font-weight-bold">
-                                    Awesome Features
-                                </h2>
-                                <p class="lead font-weight-normal text-muted mb-4">
-                                    Get to know all the features our resources have to offer for your business
-                                </p>
-                                <ul class="fa-ul text-muted">
-                                    <li>
-                                        <i class="fa fa-check text-success fa-li"></i> Awesome Feature #1
-                                    </li>
-                                    <li>
-                                        <i class="fa fa-check text-success fa-li"></i> Awesome Feature #2
-                                    </li>
-                                    <li>
-                                        <i class="fa fa-check text-success fa-li"></i> Awesome Feature #3
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
+                    <!-- Mobile Menu -->
+                    <div id="mobile-menu" class="hidden lg:hidden bg-uaut-white shadow-lg mt-4 p-4">
+                        <a href="/" class="block py-2 text-uaut-dark font-semibold hover:text-uaut-green">Home</a>
+                        <a href="#about" class="block py-2 text-uaut-dark font-semibold hover:text-uaut-green">About Us</a>
+                        <a href="#contact" class="block py-2 text-uaut-dark font-semibold hover:text-uaut-green">Contact</a>
+                        <a href="#address" class="block py-2 text-uaut-dark font-semibold hover:text-uaut-green">Address</a>
                     </div>
-                </div>
-            </div>
-            <!-- END Feature #1 -->
+                </nav>
 
-            <!-- Mini Stats -->
-            <div class="bg-primary-light py-5">
-                <div class="container">
-                    <div class="row text-center">
-                        <div class="col-sm-6 col-lg-3 py-5">
-                            <div class="display-4">
-                                350
-                            </div>
-                            <div class="text-uppercase text-muted font-weight-bold">Clients</div>
-                        </div>
-                        <div class="col-sm-6 col-lg-3 py-5">
-                            <div class="display-4">
-                                580
-                            </div>
-                            <div class="text-uppercase text-muted font-weight-bold">Projects</div>
-                        </div>
-                        <div class="col-sm-6 col-lg-3 py-5">
-                            <div class="display-4">
-                                1.5k
-                            </div>
-                            <div class="text-uppercase text-muted font-weight-bold">Sales</div>
-                        </div>
-                        <div class="col-sm-6 col-lg-3 py-5">
-                            <div class="display-4">
-                                35
-                            </div>
-                            <div class="text-uppercase text-muted font-weight-bold">Servers</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- END Mini Stats -->
-
-            <!-- Feature #2 -->
-            <div class="bg-white py-5">
-                <div class="container">
-                    <div class="row justify-content-center">
-                        <div class="col-lg-5 order-lg-1 d-flex align-items-center justify-content-center justify-content-lg-start py-5">
-                            <div class="pl-lg-4">
-                                <img class="img-fluid" style="max-width: 300px;" src="assets/media/various/undraw_digital_nomad.svg" alt="Businessman Illustration">
-                            </div>
-                        </div>
-                        <div class="col-lg-5 order-lg-0 d-flex align-items-center justify-content-center justify-content-lg-end py-5">
-                            <div class="pr-lg-4">
-                                <h2 class="font-weight-bold">
-                                    Nomad Support
-                                </h2>
-                                <p class="lead font-weight-normal text-muted mb-4">
-                                    We offer our services worldwide, 24/7. You can always count on us to deliver the best for your creative projects.
-                                </p>
-                                <ul class="fa-ul text-muted">
-                                    <li>
-                                        <i class="fa fa-check text-success fa-li"></i> Awesome Feature #1
-                                    </li>
-                                    <li>
-                                        <i class="fa fa-check text-success fa-li"></i> Awesome Feature #2
-                                    </li>
-                                    <li>
-                                        <i class="fa fa-check text-success fa-li"></i> Awesome Feature #3
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- END Feature #2 -->
-
-            <!-- Footer -->
-            <footer class="bg-primary-dark py-5">
-                <div class="container text-center py-5">
-                    <h2 class="h1 font-weight-bold text-white mb-3">
-                        Start creating now
-                    </h2>
-                    <p class="lead font-weight-normal text-white-75 mx-lg-5 mb-5">
-                        We are here to help you build your idea.
+                <!-- Hero Content -->
+                <div class="container mx-auto pt-24 pb-12 text-center">
+                    <h1 class="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+                        Welcome to UAUT Staff Risk Management System
+                    </h1>
+                    <p class="text-lg md:text-xl text-uaut-white opacity-80 mb-8 max-w-2xl mx-auto">
+                        Quick, Secure, and Confidential Risk Reporting System
                     </p>
-                    <a href="javascript:void(0)" class="btn btn-success text-uppercase font-weight-bold py-3 px-4">
-                        <i class="fa fa-check-circle mr-1"></i> REGISTER NOW
+                    <div class="flex justify-center gap-4 flex-wrap">
+                        <a href="/staff/register" class="btn-custom bg-uaut-green text-uaut-white font-semibold py-3 px-6 rounded-lg flex items-center">
+                            <i class="fas fa-check-circle mr-2"></i> Register Now
+                        </a>
+                        <a href="/staff/login" class="btn-custom bg-uaut-white text-uaut-green font-semibold py-3 px-6 rounded-lg border-2 border-uaut-green hover:bg-uaut-green hover:text-uaut-white flex items-center">
+                            <i class="fas fa-sign-in-alt mr-2"></i> Login
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feature #1 -->
+        <section id="about" class="py-16 bg-uaut-white">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col lg:flex-row items-center gap-12">
+                    <div class="lg:w-1/2">
+                        <img src="{{ url('/img/uaut-staff.jpg') }}" alt="UAUT Staff" class="w-full max-w-md mx-auto rounded-lg shadow-lg transition-transform hover:scale-105">
+                    </div>
+                    <div class="lg:w-1/2 text-center lg:text-left">
+                        <h2 class="text-3xl font-bold text-uaut-dark mb-4">Identify, Report, and Manage Risks Effectively</h2>
+                        <p class="text-lg text-gray-600 mb-6">
+                            Empowering UAUT staff to address workplace risks with ease and efficiency.
+                        </p>
+                        <ul class="space-y-3 text-gray-600">
+                            <li class="flex items-center"><i class="fas fa-check text-uaut-green mr-2"></i> Your role in making UAUT safer starts here!</li>
+                            <li class="flex items-center"><i class="fas fa-check text-uaut-green mr-2"></i> Report Financial, Technical, and Academic risks seamlessly</li>
+                            <li class="flex items-center"><i class="fas fa-check text-uaut-green mr-2"></i> A proactive platform for a better workplace</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feature #2 -->
+        <section class="py-16 bg-uaut-gray">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col lg:flex-row-reverse items-center gap-12">
+                    <div class="lg:w-1/2">
+                        <img src="{{ url('/img/uaut.jpg') }}" alt="UAUT Campus" class="w-full max-w-md mx-auto rounded-lg shadow-lg transition-transform hover:scale-105">
+                    </div>
+                    <div class="lg:w-1/2 text-center lg:text-left">
+                        <h2 class="text-3xl font-bold text-uaut-dark mb-4">Stay Updated on Risk Management</h2>
+                        <p class="text-lg text-gray-600 mb-6">
+                            Monitor reported issues, track progress, and stay informed.
+                        </p>
+                        <ul class="space-y-3 text-gray-600">
+                            <li class="flex items-center"><i class="fas fa-check text-uaut-green mr-2"></i> Efficiently report, track, and resolve risks</li>
+                            <li class="flex items-center"><i class="fas fa-check text-uaut-green mr-2"></i> Secure and confidential reporting system</li>
+                            <li class="flex items-center"><i class="fas fa-check text-uaut-green mr-2"></i> Foster a safer UAUT through proactive reporting</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer id="contact" class="bg-uaut-dark text-uaut-white py-12">
+            <div class="container mx-auto px-4 text-center">
+                <h2 class="text-3xl font-bold mb-4">Proactive Risk Management for a Better Workplace</h2>
+                <p class="text-lg opacity-80 mb-8 max-w-2xl mx-auto">
+                    Identify Issues, Take Action, and Improve Together
+                </p>
+                <div class="flex justify-center gap-4 flex-wrap mb-8">
+                    <a href="/staff/register" class="btn-custom bg-uaut-green text-uaut-white font-semibold py-3 px-6 rounded-lg flex items-center">
+                        <i class="fas fa-check-circle mr-2"></i> Register Now
                     </a>
-                    <hr class="border-dark my-5">
-                    <p class="text-white-75 mb-0">
-                        All <i class="fa fa-heart text-danger"></i> rights <a class="text-light" href="https://pixelcave.com/">Reserved</a>
-                    </p>
+                    <a href="/staff/login" class="btn-custom bg-uaut-white text-uaut-green font-semibold py-3 px-6 rounded-lg border-2 border-uaut-green hover:bg-uaut-green hover:text-uaut-white flex items-center">
+                        <i class="fas fa-sign-in-alt mr-2"></i> Login
+                    </a>
                 </div>
-            </footer>
-            <!-- END Footer -->
-        </div>
-    </body>
+                <hr class="border-gray-700 my-8">
+                <div id="address" class="text-sm opacity-80">
+                    <p>Copyright © 2025 UAUT. All rights reserved.</p>
+                    <p class="mt-2">P.O. Box 12345, Dar es Salaam, Tanzania | info@uaut.ac.tz | +255 123 456 789</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Navbar Scroll Effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Mobile Menu Toggle
+        function toggleMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+    </script>
+</body>
 </html>

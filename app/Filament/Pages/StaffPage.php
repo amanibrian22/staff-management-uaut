@@ -12,26 +12,32 @@ class StaffPage extends Page
 {
     protected static string $view = 'filament.pages.staff-page';
     protected static ?string $slug = 'staff';
-    protected static ?string $navigationLabel = 'Report Risks';
-    protected static ?string $navigationIcon = 'heroicon-o-user';
-    protected static bool $shouldRegisterNavigation = true;
+    protected static ?string $navigationLabel = 'Staff Dashboard';
+    protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
     public $description = '';
     public $type = '';
+
+    public function mount(): void
+    {
+        $this->reset(['description', 'type']);
+    }
 
     public function submit(): void
     {
         $this->validate([
             'description' => 'required|string',
-            'type' => 'required|in:financial,technical',
+            'type' => 'required|in:technical,financial,academic', // Added "academic"
         ]);
 
-        $risk = Risk::create([
+        $assignee = User::where('role', $this->type)->inRandomOrder()->first();
+
+        Risk::create([
             'reported_by' => Auth::id(),
             'description' => $this->description,
             'type' => $this->type,
             'status' => 'pending',
-            'assigned_to' => $this->assignToDepartment($this->type),
+            'assigned_to' => $assignee ? $assignee->id : null,
         ]);
 
         Notification::make()
@@ -42,15 +48,9 @@ class StaffPage extends Page
         $this->reset(['description', 'type']);
     }
 
-    private function assignToDepartment($type): ?int
-    {
-        $departmentRole = $type === 'financial' ? 'financial' : 'technical';
-        return User::where('role', $departmentRole)->first()->id ?? null;
-    }
-
     public static function canAccess(): bool
     {
-        return Auth::user()->role === 'staff';
+        return Auth::check() && Auth::user()->role === 'staff';
     }
 
     public function getTitle(): string
@@ -60,6 +60,6 @@ class StaffPage extends Page
 
     public function getHeading(): string
     {
-        return 'Report a Risk';
+        return 'Report and Track Risks';
     }
 }

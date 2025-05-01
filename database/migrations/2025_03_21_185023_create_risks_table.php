@@ -10,12 +10,12 @@ class CreateRisksTable extends Migration
     {
         Schema::create('risks', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('reported_by')->constrained('users')->onDelete('cascade');
-            $table->string('description');
-            $table->string('type'); // financial or technical
-            $table->string('status')->default('pending'); // pending, in_progress, resolved
+            $table->foreignId('reported_by')->constrained('users');
+            $table->text('description');
+            $table->string('type'); // technical, financial
+            $table->string('status')->default('pending');
+            $table->foreignId('assigned_to')->nullable()->constrained('users');
             $table->text('response')->nullable();
-            $table->foreignId('assigned_to')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
         });
     }

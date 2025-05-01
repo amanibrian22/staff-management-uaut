@@ -11,19 +11,20 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Actions\Action;
 use Illuminate\Support\Facades\Auth;
 
-class TechnicalPage extends Page implements HasTable
+class FinancialPage extends Page implements HasTable
 {
     use InteractsWithTable;
-    protected static string $view = 'filament.pages.technical-page';
-    protected static ?string $slug = 'technical'; // Matches /staff/technical
-    protected static ?string $navigationLabel = 'Technical Dashboard';
-    protected static ?string $navigationIcon = 'heroicon-o-wrench';
+
+    protected static string $view = 'filament.pages.financial-page';
+    protected static ?string $slug = 'financial';
+    protected static ?string $navigationLabel = 'Financial Dashboard';
+    protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
-                Risk::where('type', 'technical')
+                Risk::where('type', 'financial')
                     ->whereHas('reporter', fn ($query) => $query->where('role', 'staff'))
                     ->with('reporter')
             )
@@ -67,18 +68,19 @@ class TechnicalPage extends Page implements HasTable
                     ->modalSubmitActionLabel('Yes, resolve it'),
             ]);
     }
+
     public static function canAccess(): bool
     {
-        return Auth::check() && Auth::user()->role === 'technical';
+        return Auth::check() && Auth::user()->role === 'financial';
     }
 
     public function getTitle(): string
     {
-        return 'Technical Risk Overview';
+        return 'Financial Risk Overview';
     }
 
     public function getHeading(): string
     {
-        return 'Technical Risks Reported by Staff';
+        return 'Financial Risks Reported by Staff';
     }
 }

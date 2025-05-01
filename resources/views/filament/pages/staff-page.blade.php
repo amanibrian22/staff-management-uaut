@@ -28,6 +28,7 @@
                         <option value="">Select Risk Type</option>
                         <option value="financial">Financial</option>
                         <option value="technical">Technical</option>
+                        <option value="academic">Academic</option> <!-- Added -->
                     </select>
                     @error('type') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                 </div>

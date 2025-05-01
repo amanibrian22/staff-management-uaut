@@ -6,17 +6,17 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use App\Http\Controllers\Auth\LoginController;
 
-class StaffPanelProvider extends PanelProvider
+class AcademicPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->id('staff')
-            ->path('staff/staff')
+            ->id('academic')
+            ->path('staff/academic')
             ->login(LoginController::class)
-            ->logoutUrl(route('staff.logout')) // Use route name
+            ->logoutUrl(route('staff.logout'))
             ->pages([
-                \App\Filament\Pages\StaffPage::class,
+                \App\Filament\Pages\AcademicPage::class,
             ])
             ->authGuard('web')
             ->middleware(['web'])
