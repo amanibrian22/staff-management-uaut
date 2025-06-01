@@ -96,32 +96,32 @@
             <form method="POST" action="{{ route('staff.register') }}" class="mt-4">
                 @csrf
                 <div class="form-group">
-                    <label for="name">Name</label>
+                    <label for="name">Name <span class="text-danger">*</span></label>
                     <input type="text" name="name" id="name" class="form-control" value="{{ old('name') }}" required>
                 </div>
                 <div class="form-group">
-                    <label for="email">Email</label>
+                    <label for="email">Email <span class="text-danger">*</span></label>
                     <input type="email" name="email" id="email" class="form-control" value="{{ old('email') }}" required>
                 </div>
                 <div class="form-group">
-                    <label for="phone">Phone Number</label>
+                    <label for="phone">Phone Number <span class="text-danger">*</span></label>
                     <input type="text" name="phone" id="phone" class="form-control" value="{{ old('phone') }}" required>
                 </div>
                 <div class="form-group">
-                    <label for="password">Password</label>
+                    <label for="password">Password <span class="text-danger">*</span></label>
                     <input type="password" name="password" id="password" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label for="password_confirmation">Confirm Password</label>
+                    <label for="password_confirmation">Confirm Password <span class="text-danger">*</span></label>
                     <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label for="role">Role</label>
+                    <label for="role">Role <span class="text-danger">*</span></label>
                     <select name="role" id="role" class="form-control" required>
                         <option value="staff" {{ old('role') == 'staff' ? 'selected' : '' }}>Staff</option>
                         <option value="technical" {{ old('role') == 'technical' ? 'selected' : '' }}>Technical</option>
                         <option value="financial" {{ old('role') == 'financial' ? 'selected' : '' }}>Financial</option>
-                        <option value="academic" {{ old('role') == 'academic' ? 'selected' : '' }}>Academic</option> <!-- Added -->
+                        <option value="academic" {{ old('role') == 'academic' ? 'selected' : '' }}>Academic</option>
                     </select>
                 </div>
                 <button type="submit" class="btn btn-success btn-block">Register</button>

@@ -22,7 +22,8 @@
                         'primary-gray': '#f5f7fa',
                         'status-resolved': '#4caf50',
                         'status-pending': '#ff9800',
-                        'status-rejected': '#f44336'
+                        'status-in-progress': '#0288d1',
+                        'status-unresolved': '#f44336'
                     },
                     fontFamily: {
                         sans: ['Inter', 'sans-serif']
@@ -34,7 +35,6 @@
 </head>
 <body class="bg-primary-gray font-sans">
     <div class="flex h-screen">
-        <!-- Enhanced Sidebar -->
         <aside class="w-72 bg-primary-black text-primary-white p-6 flex flex-col">
             <div class="flex items-center mb-8">
                 <div class="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
@@ -45,8 +45,6 @@
                     <p class="text-xs text-gray-400">Academic Dashboard</p>
                 </div>
             </div>
-
-            <!-- Profile Card -->
             <div class="mb-8">
                 <div class="bg-gray-800 p-4 rounded-lg border-l-4 border-primary-green">
                     <div class="flex items-center mb-3">
@@ -69,10 +67,14 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Navigation -->
             <nav class="mb-8">
                 <ul class="space-y-2">
+                    <li>
+                        <a href="#report-risk" class="flex items-center p-2 rounded-lg hover:bg-gray-700 text-gray-300 hover:text-primary-white transition">
+                            <i class="fas fa-exclamation-triangle mr-3"></i>
+                            Report Risk
+                        </a>
+                    </li>
                     <li>
                         <a href="#reported-risks" class="flex items-center p-2 rounded-lg bg-gray-700 text-primary-white">
                             <i class="fas fa-list-ul mr-3"></i>
@@ -81,8 +83,6 @@
                     </li>
                 </ul>
             </nav>
-
-            <!-- Logout Button -->
             <div class="mt-auto">
                 <form action="{{ route('staff.logout') }}" method="POST">
                     @csrf
@@ -93,10 +93,7 @@
                 </form>
             </div>
         </aside>
-
-        <!-- Main Content -->
         <main class="flex-1 p-8 overflow-y-auto">
-            <!-- Header -->
             <div class="flex justify-between items-center mb-8">
                 <div>
                     <h1 class="text-2xl font-bold text-primary-black">Academic Risk Dashboard</h1>
@@ -106,8 +103,79 @@
                     <span class="text-sm text-gray-500">Last login: {{ now()->format('M d, Y H:i') }}</span>
                 </div>
             </div>
-
-            <!-- Reported Risks Section -->
+            <section id="report-risk" class="bg-primary-white p-6 rounded-xl shadow-md mb-8 border border-gray-200">
+                <div class="flex items-center mb-4">
+                    <div class="w-8 h-8 bg-primary-green rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-plus text-primary-white"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-primary-black">Report a New Risk</h2>
+                </div>
+                @if (session('success'))
+                    <div class="bg-primary-green text-primary-white p-3 rounded mb-4 flex items-center">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        {{ session('success') }}
+                    </div>
+                @endif
+                @if ($errors->any())
+                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded mb-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <strong>Please fix these issues:</strong>
+                        </div>
+                        <ul class="mt-1 ml-6 list-disc">
+                            @foreach ($errors->all() as $error)
+                                <li class="text-sm">{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+                <form action="{{ route('staff.report') }}" method="POST">
+                    @csrf
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Risk Description</label>
+                            <textarea name="description" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-green focus:border-transparent" rows="4" placeholder="Describe the risk in detail..." required>{{ old('description') }}</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                            <div class="relative">
+                                <select name="type" class="w-full p-3 border border-gray-300 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-primary-green focus:border-transparent" required>
+                                    <option value="" disabled selected>Select department</option>
+                                    <option value="technical" {{ old('type') == 'technical' ? 'selected' : '' }}>Technical</option>
+                                    <option value="financial" {{ old('type') == 'financial' ? 'selected' : '' }}>Financial</option>
+                                    <option value="academic" {{ old('type') == 'academic' ? 'selected' : '' }}>Academic</option>
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                    <i class="fas fa-chevron-down text-gray-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Urgency</label>
+                            <div class="flex space-x-4">
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="urgency" value="low" class="form-radio text-primary-green" {{ old('urgency') == 'low' ? 'checked' : '' }}>
+                                    <span class="ml-2">Low</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="urgency" value="medium" class="form-radio text-primary-green" {{ old('urgency', 'medium') == 'medium' ? 'checked' : '' }}>
+                                    <span class="ml-2">Medium</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="urgency" value="high" class="form-radio text-primary-green" {{ old('urgency') == 'high' ? 'checked' : '' }}>
+                                    <span class="ml-2">High</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                        <button type="submit" class="bg-primary-green hover:bg-green-700 text-primary-white py-2 px-6 rounded-lg flex items-center transition">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Submit Risk Report
+                        </button>
+                    </div>
+                </form>
+            </section>
             <section id="reported-risks" class="bg-primary-white p-6 rounded-xl shadow-md border border-gray-200">
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center">
@@ -120,16 +188,17 @@
                         Total: {{ $risks->count() }} reports
                     </div>
                 </div>
-
                 <div class="overflow-x-auto rounded-lg border border-gray-200">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reported By</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Urgency</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Response</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -139,24 +208,65 @@
                                     <td class="px-6 py-4 whitespace-normal max-w-xs">
                                         <div class="text-sm font-medium text-gray-900">{{ Str::limit($risk->description, 60) }}</div>
                                     </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                                            @if ($risk->urgency == 'high')
+                                                bg-red-100 text-red-800
+                                            @elseif ($risk->urgency == 'medium')
+                                                bg-yellow-100 text-yellow-800
+                                            @else
+                                                bg-green-100 text-green-800
+                                            @endif">
+                                            {{ ucfirst($risk->urgency) }}
+                                        </span>
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {{ $risk->created_at->format('M d, Y') }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span class="px-2 py-1 text-xs font-semibold rounded-full 
-                                            {{ $risk->status == 'resolved' ? 'bg-status-resolved text-white' : 
-                                               ($risk->status == 'pending' ? 'bg-status-pending text-white' : 
-                                               'bg-status-rejected text-white') }}">
-                                            {{ ucfirst($risk->status) }}
+                                            @if ($risk->status == 'resolved')
+                                                bg-status-resolved text-white
+                                            @elseif ($risk->status == 'in_progress')
+                                                bg-status-in-progress text-white
+                                            @elseif ($risk->status == 'unresolved')
+                                                bg-status-unresolved text-white
+                                            @else
+                                                bg-status-pending text-white
+                                            @endif">
+                                            {{ ucfirst(str_replace('_', ' ', $risk->status)) }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-normal max-w-xs text-sm text-gray-500">
                                         {{ $risk->response ?? 'Awaiting response' }}
                                     </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        @if (in_array($risk->status, ['pending', 'in_progress']))
+                                            <form action="{{ route('academic.progress', $risk) }}" method="POST" class="mb-2">
+                                                @csrf
+                                                <textarea name="response" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="Enter progress update (e.g., Working on it, will be done by tomorrow)" required></textarea>
+                                                <button type="submit" class="bg-status-in-progress hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs font-semibold transition mt-1">We are working on it</button>
+                                            </form>
+                                            <form action="{{ route('academic.resolve', $risk) }}" method="POST" class="mb-2">
+                                                @csrf
+                                                <textarea name="response" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="Enter resolution details" {{ $risk->urgency == 'high' ? 'required' : '' }}></textarea>
+                                                <button type="submit" class="bg-status-resolved hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs font-semibold transition mt-1">Resolved</button>
+                                            </form>
+                                            @if ($risk->urgency == 'high')
+                                                <form action="{{ route('academic.suggest', $risk) }}" method="POST">
+                                                    @csrf
+                                                    <textarea name="response" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="Suggest an alternate solution" required></textarea>
+                                                    <button type="submit" class="bg-status-unresolved hover:bg-red-700 text-white px-3 py-1 rounded-lg text-xs font-semibold transition mt-1">Suggest Alternate</button>
+                                                </form>
+                                            @endif
+                                        @else
+                                            <span class="text-gray-400">Actioned</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">
                                         <div class="flex flex-col items-center justify-center py-8">
                                             <i class="fas fa-clipboard-list text-4xl text-gray-300 mb-2"></i>
                                             <p class="text-gray-500">No risks reported yet.</p>

@@ -30,11 +30,11 @@
             <form method="POST" action="{{ route('staff.login') }}">
                 @csrf
                 <div class="mb-4">
-                    <label for="email" class="block text-sm font-medium text-primary-black">Email</label>
+                    <label for="email" class="block text-sm font-medium text-primary-black">Email <span class="text-red-500">*</span></label>
                     <input type="email" name="email" id="email" value="{{ old('email') }}" class="w-full p-3 mt-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-green" required>
                 </div>
                 <div class="mb-6">
-                    <label for="password" class="block text-sm font-medium text-primary-black">Password</label>
+                    <label for="password" class="block text-sm font-medium text-primary-black">Password <span class="text-red-500">*</span></label>
                     <input type="password" name="password" id="password" class="w-full p-3 mt-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-green" required>
                 </div>
                 <button type="submit" class="w-full bg-primary-green text-primary-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">Login</button>

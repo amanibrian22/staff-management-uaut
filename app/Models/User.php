@@ -3,15 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
+    use Notifiable;
+
     protected $fillable = [
         'name',
         'email',
         'phone',
-        'password',
         'role',
+        'password',
     ];
 
     protected $hidden = [
@@ -19,8 +22,8 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    public function risks()
-    {
-        return $this->hasMany(Risk::class, 'reported_by');
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
 }
