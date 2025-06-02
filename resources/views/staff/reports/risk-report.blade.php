@@ -81,14 +81,6 @@
         tr:nth-child(even) {
             background: #f5f7fa;
         }
-        .chart-container {
-            margin: 20px 0;
-            text-align: center;
-        }
-        .chart-container img {
-            max-width: 100%;
-            height: auto;
-        }
         .footer {
             text-align: center;
             margin-top: 40px;
@@ -137,21 +129,6 @@
             </div>
         </div>
 
-        <div class="chart-container">
-            <h2>Risk Status Distribution</h2>
-            <img src="data:image/png;base64,{{ $metrics['status_chart_base64'] ?? '' }}" alt="Risk Status Pie Chart" style="max-width: 400px;">
-        </div>
-
-        <div class="chart-container">
-            <h2>Risks by Department</h2>
-            <img src="data:image/png;base64,{{ $metrics['department_chart_base64'] ?? '' }}" alt="Risks by Department Bar Chart" style="max-width: 500px;">
-        </div>
-
-        <div class="chart-container">
-            <h2>Risks by Urgency</h2>
-            <img src="data:image/png;base64,{{ $metrics['urgency_chart_base64'] ?? '' }}" alt="Risks by Urgency Bar Chart" style="max-width: 500px;">
-        </div>
-
         <h2>Risk Details</h2>
         <table>
             <thead>
@@ -169,12 +146,12 @@
                 @foreach ($risks as $risk)
                     <tr>
                         <td>{{ $risk->id }}</td>
-                        <td>{{ Str::limit($risk->description, 100) }}</td>
+                        <td>{{ \Illuminate\Support\Str::limit($risk->description, 100) }}</td>
                         <td>{{ ucfirst($risk->type) }}</td>
                         <td>{{ ucfirst($risk->urgency) }}</td>
                         <td class="status-{{ str_replace('_', '-', $risk->status) }}">{{ ucfirst(str_replace('_', ' ', $risk->status)) }}</td>
                         <td>{{ $risk->reporter->name ?? 'N/A' }}</td>
-                        <td>{{ Str::limit($risk->response ?? 'N/A', 100) }}</td>
+                        <td>{{ \Illuminate\Support\Str::limit($risk->response ?? 'N/A', 100) }}</td>
                     </tr>
                 @endforeach
             </tbody>

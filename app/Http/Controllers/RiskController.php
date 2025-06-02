@@ -114,7 +114,7 @@ class RiskController extends Controller
                 'total' => $risks->total(),
             ]);
         } catch (\Exception $e) {
-            Log::error('Error filtering risks: ' . $e->getMessage());
+            Log::error('Error filtering risks: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return response()->json(['error' => 'Error filtering risks: ' . $e->getMessage()], 500);
         }
     }
@@ -141,7 +141,7 @@ class RiskController extends Controller
                 'total' => $users->count(),
             ]);
         } catch (\Exception $e) {
-            Log::error('Error filtering users: ' . $e->getMessage());
+            Log::error('Error filtering users: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return response()->json(['error' => 'Error filtering users: ' . $e->getMessage()], 500);
         }
     }
@@ -440,10 +440,18 @@ class RiskController extends Controller
             $risks = $riskQuery->get();
             $metrics = $this->getRiskMetrics($request);
 
-            $pdf = Pdf::loadView('reports.risk-report', compact('risks', 'metrics'));
+            if (!View::exists('staff.reports.risk-report')) {
+                Log::error('View staff.reports.risk-report not found', ['path' => resource_path('views/staff/reports/risk-report.blade.php')]);
+                return redirect()->back()->with('error', 'Report template not found. Please contact support.');
+            }
+
+            $pdf = Pdf::loadView('staff.reports.risk-report', compact('risks', 'metrics'));
             return $pdf->download('risk_management_report.pdf');
         } catch (\Exception $e) {
-            Log::error('Report generation error', ['message' => $e->getMessage()]);
+            Log::error('Report generation error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             return redirect()->back()->with('error', 'Error generating report: ' . $e->getMessage());
         }
     }
