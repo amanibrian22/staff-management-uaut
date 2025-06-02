@@ -7,39 +7,143 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\RiskResponseNotification;
+use Illuminate\Support\Facades\Log;
 
 class RiskController extends Controller
 {
     public function showStaffDashboard()
     {
-        $risks = Risk::where('reported_by', Auth::id())->get();
+        $risks = Risk::where('reported_by', Auth::id())
+                     ->with(['reporter', 'responder'])
+                     ->get();
+        Log::info('Staff dashboard loaded', [
+            'user_id' => Auth::id(),
+            'risk_count' => $risks->count(),
+            'risks' => $risks->map(function ($risk) {
+                return [
+                    'id' => $risk->id,
+                    'responded_by' => $risk->responded_by,
+                    'responder_name' => $risk->responder ? $risk->responder->name : null,
+                ];
+            })->toArray(),
+        ]);
         return view('staff.staff', compact('risks'));
     }
 
     public function showTechnicalDashboard()
     {
-        $risks = Risk::where('type', 'technical')->get();
+        $risks = Risk::where('type', 'technical')->with(['reporter', 'responder'])->get();
         return view('staff.technical', compact('risks'));
     }
 
     public function showFinancialDashboard()
     {
-        $risks = Risk::where('type', 'financial')->get();
+        $risks = Risk::where('type', 'financial')->with(['reporter', 'responder'])->get();
         return view('staff.financial', compact('risks'));
     }
 
     public function showAcademicDashboard()
     {
-        $risks = Risk::where('type', 'academic')->get();
+        $risks = Risk::where('type', 'academic')->with(['reporter', 'responder'])->get();
         return view('staff.academic', compact('risks'));
     }
 
-    public function showAdminDashboard()
+    public function showAdminDashboard(Request $request)
     {
-        $risks = Risk::all();
-        $users = User::all();
-        $metrics = $this->getRiskMetrics();
+        $riskQuery = Risk::query()->with(['reporter', 'responder']);
+
+        if ($request->filled('type')) {
+            $riskQuery->where('type', $request->input('type'));
+        }
+
+        if ($request->filled('urgency')) {
+            $riskQuery->where('urgency', $request->input('urgency'));
+        }
+
+        if ($request->filled('status')) {
+            $riskQuery->where('status', $request->input('status'));
+        }
+
+        $risks = $riskQuery->paginate(10);
+
+        $userQuery = User::query();
+
+        if ($request->filled('role')) {
+            $userQuery->where('role', $request->input('role'));
+        }
+
+        $users = $userQuery->get();
+
+        $metrics = $this->getRiskMetrics($request);
+
         return view('staff.admin', compact('risks', 'users', 'metrics'));
+    }
+
+    public function filterRisks(Request $request)
+    {
+        try {
+            $riskQuery = Risk::query()->with(['reporter', 'responder']);
+
+            if ($request->filled('type')) {
+                $riskQuery->where('type', $request->input('type'));
+            }
+
+            if ($request->filled('urgency')) {
+                $riskQuery->where('urgency', $request->input('urgency'));
+            }
+
+            if ($request->filled('status')) {
+                $riskQuery->where('status', $request->input('status'));
+            }
+
+            $risks = $riskQuery->paginate(10);
+
+            if (!View::exists('staff.partials.risks-table')) {
+                return response()->json(['error' => 'View staff.partials.risks-table not found'], 404);
+            }
+
+            $tableHtml = view('staff.partials.risks-table', compact('risks'))->render();
+            $paginationHtml = $risks->appends($request->query())->links('pagination::tailwind')->toHtml();
+
+            return response()->json([
+                'table' => $tableHtml,
+                'pagination' => $paginationHtml,
+                'total' => $risks->total(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error filtering risks: ' . $e->getMessage());
+            return response()->json(['error' => 'Error filtering risks: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function filterUsers(Request $request)
+    {
+        try {
+            $userQuery = User::query();
+
+            if ($request->filled('role')) {
+                $userQuery->where('role', $request->input('role'));
+            }
+
+            $users = $userQuery->get();
+
+            if (!View::exists('staff.partials.users-table')) {
+                return response()->json(['error' => 'View staff.partials.users-table not found'], 404);
+            }
+
+            $tableHtml = view('staff.partials.users-table', compact('users'))->render();
+
+            return response()->json([
+                'table' => $tableHtml,
+                'total' => $users->count(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error filtering users: ' . $e->getMessage());
+            return response()->json(['error' => 'Error filtering users: ' . $e->getMessage()], 500);
+        }
     }
 
     public function reportRisk(Request $request)
@@ -50,7 +154,7 @@ class RiskController extends Controller
             'urgency' => 'required|in:low,medium,high',
         ]);
 
-        Risk::create([
+        $risk = Risk::create([
             'reported_by' => Auth::id(),
             'description' => $validated['description'],
             'type' => $validated['type'],
@@ -58,7 +162,12 @@ class RiskController extends Controller
             'status' => 'pending',
         ]);
 
-        return redirect()->route('staff.dashboard')->with('success', 'Risk reported successfully!');
+        Log::info('Risk reported', [
+            'risk_id' => $risk->id,
+            'reported_by' => Auth::id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Risk reported successfully.');
     }
 
     public function reportProgress(Request $request, Risk $risk)
@@ -67,13 +176,22 @@ class RiskController extends Controller
             'response' => 'required|string|max:1000',
         ]);
 
-        $risk->update([
+        $updated = $risk->update([
             'response' => $validated['response'],
             'status' => 'in_progress',
-            'responder_id' => Auth::id(),
+            'responded_by' => Auth::id(),
         ]);
 
-        return redirect()->back()->with('success', 'Progress reported successfully!');
+        Log::info('Risk progress reported', [
+            'risk_id' => $risk->id,
+            'responded_by' => Auth::id(),
+            'updated' => $updated,
+            'user' => Auth::user()->toArray(),
+        ]);
+
+        $this->sendNotification($risk, 'progress reported');
+
+        return redirect()->back()->with('success', 'Progress reported successfully.');
     }
 
     public function resolveRisk(Request $request, Risk $risk)
@@ -82,13 +200,35 @@ class RiskController extends Controller
             'response' => 'required|string|max:1000',
         ]);
 
-        $risk->update([
+        if (!Auth::check()) {
+            Log::error('No authenticated user found in resolveRisk', ['risk_id' => $risk->id]);
+            return redirect()->back()->with('error', 'Authentication required to resolve risk.');
+        }
+
+        $updated = $risk->update([
             'response' => $validated['response'],
             'status' => 'resolved',
-            'responder_id' => Auth::id(),
+            'responded_by' => Auth::id(),
         ]);
 
-        return redirect()->back()->with('success', 'Risk resolved successfully!');
+        Log::info('Risk resolved', [
+            'risk_id' => $risk->id,
+            'responded_by' => Auth::id(),
+            'updated' => $updated,
+            'user' => Auth::user()->toArray(),
+            'risk_after_update' => $risk->fresh()->toArray(),
+        ]);
+
+        if (!$updated) {
+            Log::error('Failed to update risk with responded_by', [
+                'risk_id' => $risk->id,
+                'responded_by' => Auth::id(),
+            ]);
+        }
+
+        $this->sendNotification($risk, 'resolved');
+
+        return redirect()->back()->with('success', 'Risk resolved successfully.');
     }
 
     public function suggestAlternate(Request $request, Risk $risk)
@@ -97,13 +237,48 @@ class RiskController extends Controller
             'response' => 'required|string|max:1000',
         ]);
 
-        $risk->update([
+        $updated = $risk->update([
             'response' => $validated['response'],
             'status' => 'unresolved',
-            'responder_id' => Auth::id(),
+            'responded_by' => Auth::id(),
         ]);
 
-        return redirect()->back()->with('success', 'Alternate solution suggested successfully!');
+        Log::info('Alternate solution suggested', [
+            'risk_id' => $risk->id,
+            'responded_by' => Auth::id(),
+            'updated' => $updated,
+            'user' => Auth::user()->toArray(),
+        ]);
+
+        $this->sendNotification($risk, 'alternate solution suggested');
+
+        return redirect()->back()->with('success', 'Alternate solution suggested successfully.');
+    }
+
+    protected function sendNotification(Risk $risk, string $action)
+    {
+        $reporter = User::find($risk->reported_by);
+        if ($reporter && $reporter->email) {
+            try {
+                Mail::to($reporter->email)->queue(new RiskResponseNotification($risk->fresh()->load(['reporter', 'responder']), $action));
+                Log::info('Email notification queued', [
+                    'risk_id' => $risk->id,
+                    'to' => $reporter->email,
+                    'action' => $action,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to queue email notification', [
+                    'risk_id' => $risk->id,
+                    'to' => $reporter->email,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        } else {
+            Log::warning('No valid reporter email found', [
+                'risk_id' => $risk->id,
+                'reported_by' => $risk->reported_by,
+            ]);
+        }
     }
 
     public function adminAddRisk(Request $request)
@@ -123,7 +298,7 @@ class RiskController extends Controller
             'status' => 'pending',
         ]);
 
-        return redirect()->route('admin.dashboard')->with('success', 'Risk added successfully!');
+        return redirect()->back()->with('success', 'Risk added successfully.');
     }
 
     public function adminEditRisk(Request $request, Risk $risk)
@@ -134,11 +309,12 @@ class RiskController extends Controller
             'urgency' => 'required|in:low,medium,high',
             'status' => 'required|in:pending,in_progress,resolved,unresolved',
             'response' => 'nullable|string|max:1000',
+            'responded_by' => 'nullable|exists:users,id',
         ]);
 
         $risk->update($validated);
 
-        return redirect()->route('admin.dashboard')->with('success', 'Risk updated successfully!');
+        return redirect()->back()->with('success', 'Risk updated successfully.');
     }
 
     public function adminDeleteRisk(Risk $risk)
@@ -148,7 +324,7 @@ class RiskController extends Controller
         }
 
         $risk->delete();
-        return redirect()->route('admin.dashboard')->with('success', 'Risk deleted successfully!');
+        return redirect()->back()->with('success', 'Risk deleted successfully.');
     }
 
     public function adminAddUser(Request $request)
@@ -169,7 +345,7 @@ class RiskController extends Controller
             'password' => bcrypt($validated['password']),
         ]);
 
-        return redirect()->route('admin.dashboard')->with('success', 'User added successfully!');
+        return redirect()->back()->with('success', 'User added successfully.');
     }
 
     public function adminEditUser(Request $request, User $user)
@@ -190,7 +366,7 @@ class RiskController extends Controller
             'password' => $validated['password'] ? bcrypt($validated['password']) : $user->password,
         ]);
 
-        return redirect()->route('admin.dashboard')->with('success', 'User updated successfully!');
+        return redirect()->back()->with('success', 'User updated successfully.');
     }
 
     public function adminDeleteUser(User $user)
@@ -199,29 +375,39 @@ class RiskController extends Controller
             abort(403, 'Unauthorized');
         }
 
-        // Prevent deleting the current admin user
         if ($user->id === Auth::id()) {
-            return redirect()->route('admin.dashboard')->with('error', 'Cannot delete your own account!');
+            return redirect()->back()->with('error', 'Cannot delete your own account.');
         }
 
-        // Delete all risks reported by the user
         Risk::where('reported_by', $user->id)->delete();
-
-        // Delete the user
         $user->delete();
 
-        return redirect()->route('admin.dashboard')->with('success', 'User and associated risks deleted successfully!');
+        return redirect()->back()->with('success', 'User and associated risks deleted successfully.');
     }
 
-    protected function getRiskMetrics()
+    protected function getRiskMetrics(Request $request)
     {
-        $total_risks = Risk::count();
-        $resolved_risks = Risk::where('status', 'resolved')->count();
-        $pending_risks = Risk::where('status', 'pending')->count();
-        $in_progress_risks = Risk::where('status', 'in_progress')->count();
-        $unresolved_risks = Risk::where('status', 'unresolved')->count();
-        $by_department = Risk::groupBy('type')->selectRaw('type, count(*) as count')->pluck('count', 'type')->toArray();
-        $by_urgency = Risk::groupBy('urgency')->selectRaw('urgency, count(*) as count')->pluck('count', 'urgency')->toArray();
+        $query = Risk::query();
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->input('type'));
+        }
+
+        if ($request->filled('urgency')) {
+            $query->where('urgency', $request->input('urgency'));
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        $total_risks = $query->count();
+        $resolved_risks = $query->clone()->where('status', 'resolved')->count();
+        $pending_risks = $query->clone()->where('status', 'pending')->count();
+        $in_progress_risks = $query->clone()->where('status', 'in_progress')->count();
+        $unresolved_risks = $query->clone()->where('status', 'unresolved')->count();
+        $by_department = $query->clone()->groupBy('type')->selectRaw('type, count(*) as count')->pluck('count', 'type')->toArray();
+        $by_urgency = $query->clone()->groupBy('urgency')->selectRaw('urgency, count(*) as count')->pluck('count', 'urgency')->toArray();
 
         return compact(
             'total_risks',
@@ -234,101 +420,40 @@ class RiskController extends Controller
         );
     }
 
-    public function generateReport()
+    public function generateReport(Request $request)
     {
-        $risks = Risk::all();
-        $metrics = $this->getRiskMetrics();
+        try {
+            $riskQuery = Risk::query()->with(['reporter', 'responder']);
 
-        $latex = "\\documentclass{article}\n";
-        $latex .= "\\usepackage{geometry}\n";
-        $latex .= "\\geometry{a4paper, margin=1in}\n";
-        $latex .= "\\usepackage{booktabs}\n";
-        $latex .= "\\usepackage{longtable}\n";
-        $latex .= "\\usepackage{pdflscape}\n";
-        $latex .= "\\title{Risk Management Report}\n";
-        $latex .= "\\author{UAUT Risk Management System}\n";
-        $latex .= "\\date{\\today}\n";
-        $latex .= "\\begin{document}\n";
-        $latex .= "\\maketitle\n";
-        $latex .= "\\section{Summary Metrics}\n";
-        $latex .= "\\begin{tabular}{lr}\n";
-        $latex .= "\\toprule\n";
-        $latex .= "Metric & Count \\\\\n";
-        $latex .= "\\midrule\n";
-        $latex .= "Total Risks & {$metrics['total_risks']} \\\\\n";
-        $latex .= "Resolved Risks & {$metrics['resolved_risks']} \\\\\n";
-        $latex .= "Pending Risks & {$metrics['pending_risks']} \\\\\n";
-        $latex .= "In Progress Risks & {$metrics['in_progress_risks']} \\\\\n";
-        $latex .= "Unresolved Risks & {$metrics['unresolved_risks']} \\\\\n";
-        $latex .= "\\bottomrule\n";
-        $latex .= "\\end{tabular}\n";
-        $latex .= "\\section{Risks by Department}\n";
-        $latex .= "\\begin{tabular}{lr}\n";
-        $latex .= "\\toprule\n";
-        $latex .= "Department & Count \\\\\n";
-        $latex .= "\\midrule\n";
-        foreach ($metrics['by_department'] as $dept => $count) {
-            $latex .= ucfirst($dept) . " & {$count} \\\\\n";
-        }
-        $latex .= "\\bottomrule\n";
-        $latex .= "\\end{tabular}\n";
-        $latex .= "\\section{Risks by Urgency}\n";
-        $latex .= "\\begin{tabular}{lr}\n";
-        $latex .= "\\toprule\n";
-        $latex .= "Urgency & Count \\\\\n";
-        $latex .= "\\midrule\n";
-        foreach ($metrics['by_urgency'] as $urgency => $count) {
-            $latex .= ucfirst($urgency) . " & {$count} \\\\\n";
-        }
-        $latex .= "\\bottomrule\n";
-        $latex .= "\\end{tabular}\n";
-        $latex .= "\\section{All Risks}\n";
-        $latex .= "\\begin{landscape}\n";
-        $latex .= "\\begin{longtable}{p{3cm}p{5cm}p{2cm}p{2cm}p{2cm}p{5cm}p{3cm}}\n";
-        $latex .= "\\toprule\n";
-        $latex .= "Reported By & Description & Type & Urgency & Status & Response & Responder \\\\\n";
-        $latex .= "\\midrule\n";
-        foreach ($risks as $risk) {
-            $reportedBy = addslashes($risk->reporter->name ?? 'Unknown');
-            $description = addslashes(Str::limit($risk->description, 100));
-            $type = ucfirst($risk->type);
-            $urgency = ucfirst($risk->urgency);
-            $status = ucfirst(str_replace('_', ' ', $risk->status));
-            $response = addslashes($risk->response ?? 'None');
-            $responder = addslashes($risk->responder ? $risk->responder->name : 'None');
-            $latex .= "{$reportedBy} & {$description} & {$type} & {$urgency} & {$status} & {$response} & {$responder} \\\\\n";
-        }
-        $latex .= "\\bottomrule\n";
-        $latex .= "\\end{longtable}\n";
-        $latex .= "\\end{landscape}\n";
-        $latex .= "\\end{document}\n";
+            if ($request->filled('type')) {
+                $riskQuery->where('type', $request->input('type'));
+            }
 
-        $tempDir = storage_path('app/reports');
-        if (!file_exists($tempDir)) {
-            mkdir($tempDir, 0755, true);
+            if ($request->filled('urgency')) {
+                $riskQuery->where('urgency', $request->input('urgency'));
+            }
+
+            if ($request->filled('status')) {
+                $riskQuery->where('status', $request->input('status'));
+            }
+
+            $risks = $riskQuery->get();
+            $metrics = $this->getRiskMetrics($request);
+
+            $pdf = Pdf::loadView('reports.risk-report', compact('risks', 'metrics'));
+            return $pdf->download('risk_management_report.pdf');
+        } catch (\Exception $e) {
+            Log::error('Report generation error', ['message' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Error generating report: ' . $e->getMessage());
         }
-        $texFile = $tempDir . '/report.tex';
-        file_put_contents($texFile, $latex);
+    }
 
-        $outputDir = $tempDir . '/output';
-        if (!file_exists($outputDir)) {
-            mkdir($outputDir, 0755, true);
+    public function debugRisksTable()
+    {
+        $risks = Risk::with(['reporter', 'responder'])->paginate(10);
+        if (!View::exists('staff.partials.risks-table')) {
+            return response()->json(['error' => 'View staff.partials.risks-table not found'], 404);
         }
-
-        $command = "latexmk -pdf -outdir={$outputDir} {$texFile} 2>&1";
-        $output = [];
-        $returnVar = 0;
-        exec($command, $output, $returnVar);
-
-        if ($returnVar !== 0) {
-            return redirect()->route('admin.dashboard')->with('error', 'Failed to generate report: ' . implode(' ', $output));
-        }
-
-        $pdfFile = $outputDir . '/report.pdf';
-        if (!file_exists($pdfFile)) {
-            return redirect()->route('admin.dashboard')->with('error', 'PDF file was not generated.');
-        }
-
-        return response()->download($pdfFile, 'risk_management_report.pdf')->deleteFileAfterSend(true);
+        return view('staff.partials.risks-table', compact('risks'));
     }
 }

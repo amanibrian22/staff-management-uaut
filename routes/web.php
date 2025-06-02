@@ -53,4 +53,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/staff/admin/edit-user/{user}', [RiskController::class, 'adminEditUser'])->name('admin.edit.user');
     Route::delete('/staff/admin/delete-user/{user}', [RiskController::class, 'adminDeleteUser'])->name('admin.delete.user');
     Route::get('/staff/admin/generate-report', [RiskController::class, 'generateReport'])->name('admin.generate.report');
+    Route::get('/staff/admin/filter-risks', [RiskController::class, 'filterRisks'])->name('admin.filter.risks');
+    Route::get('/staff/admin/filter-users', [RiskController::class, 'filterUsers'])->name('admin.filter.users');
 });
