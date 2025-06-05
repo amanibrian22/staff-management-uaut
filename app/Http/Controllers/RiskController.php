@@ -409,6 +409,54 @@ class RiskController extends Controller
         $by_department = $query->clone()->groupBy('type')->selectRaw('type, count(*) as count')->pluck('count', 'type')->toArray();
         $by_urgency = $query->clone()->groupBy('urgency')->selectRaw('urgency, count(*) as count')->pluck('count', 'urgency')->toArray();
 
+        // Generate chart URLs
+        $status_chart_url = 'https://quickchart.io/chart?c=' . urlencode(json_encode([
+            'type' => 'pie',
+            'data' => [
+                'labels' => ['Resolved', 'Pending', 'In Progress', 'Unresolved'],
+                'datasets' => [[
+                    'data' => [$resolved_risks, $pending_risks, $in_progress_risks, $unresolved_risks],
+                    'backgroundColor' => ['#2f855a', '#d69e2e', '#3182ce', '#c53030'],
+                ]],
+            ],
+            'options' => [
+                'title' => ['display' => true, 'text' => 'Risk Status Distribution'],
+                'legend' => ['position' => 'bottom'],
+            ],
+        ]));
+
+        $department_chart_url = 'https://quickchart.io/chart?c=' . urlencode(json_encode([
+            'type' => 'bar',
+            'data' => [
+                'labels' => array_keys($by_department),
+                'datasets' => [[
+                    'label' => 'Risks',
+                    'data' => array_values($by_department),
+                    'backgroundColor' => '#1a3c34',
+                ]],
+            ],
+            'options' => [
+                'title' => ['display' => true, 'text' => 'Risks by Department'],
+                'scales' => ['yAxes' => [['ticks' => ['beginAtZero' => true]]]],
+            ],
+        ]));
+
+        $urgency_chart_url = 'https://quickchart.io/chart?c=' . urlencode(json_encode([
+            'type' => 'bar',
+            'data' => [
+                'labels' => array_keys($by_urgency),
+                'datasets' => [[
+                    'label' => 'Risks',
+                    'data' => array_values($by_urgency),
+                    'backgroundColor' => '#4a6f68',
+                ]],
+            ],
+            'options' => [
+                'title' => ['display' => true, 'text' => 'Risks by Urgency'],
+                'scales' => ['yAxes' => [['ticks' => ['beginAtZero' => true]]]],
+            ],
+        ]));
+
         return compact(
             'total_risks',
             'resolved_risks',
@@ -416,7 +464,10 @@ class RiskController extends Controller
             'in_progress_risks',
             'unresolved_risks',
             'by_department',
-            'by_urgency'
+            'by_urgency',
+            'status_chart_url',
+            'department_chart_url',
+            'urgency_chart_url'
         );
     }
 
