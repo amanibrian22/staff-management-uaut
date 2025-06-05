@@ -209,7 +209,7 @@
 
                 <hr class="border-gray-700 my-8">
                 <div class="text-sm opacity-80">
-    <p>Copyright © 2025 UAUT. All rights reserved.</p>
+    <p>Copyright © 2025 UAUT. All rights reserved</p>
     <p class="mt-2">P.O. Box 12345, Kisiwani Dar es Salaam, Tanzania | 
         <a href="https://www.uaut.ac.tz" target="_blank" class="hover:text-uaut-green underline">Official Website</a>
     </p>
